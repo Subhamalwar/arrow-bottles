@@ -1,0 +1,8 @@
+{
+  "appId": "com.arrowbottles.game",
+  "appName": "Arrow Bottles",
+  "webDir": ".",
+  "server": {
+    "androidScheme": "https"
+  }
+}
