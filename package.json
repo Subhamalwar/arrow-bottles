@@ -1,14 +1,16 @@
 {
   "name": "arrow-bottles",
-  "version": "1.0.0",
-  "description": "Arrow Bottles Puzzle Game",
-  "main": "index.js",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Arrow Bottles \u2014 mobile-first colour-sort puzzle game",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test"
   },
   "dependencies": {
-    "@capacitor/android": "^5.0.0",
-    "@capacitor/core": "^5.0.0",
-    "@capacitor/cli": "^5.0.0"
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
   }
 }
