@@ -83,47 +83,48 @@ h1{font-size:clamp(21px,5vw,28px);line-height:1.1;margin:0;letter-spacing:-.7px}
   function save() {
     try { localStorage.setItem("arrowBottlesSave", JSON.stringify({level, wins, bestByLevel})); } catch (_) {}
   }
-  function shuffled(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
   function newPuzzle() {
     const count = colorCount();
-    // Begin from a solved board and scramble only with legal pours. Every
-    // generated position is therefore reachable from a solved position.
-    let candidate;
-    do {
-      candidate = [];
-      for (let c = 0; c < count; c++) candidate.push([c, c, c, c]);
-      candidate.push([], []);
-      let previousMove = "";
-      const scrambleMoves = 24 + Math.min(level * 3, 45);
-      for (let step = 0; step < scrambleMoves; step++) {
-        const options = [];
-        for (let from = 0; from < candidate.length; from++) {
-          const src = candidate[from];
-          if (!src.length) continue;
-          const color = src[src.length - 1];
-          let run = 0;
-          for (let k = src.length - 1; k >= 0 && src[k] === color; k--) run++;
-          for (let to = 0; to < candidate.length; to++) {
-            if (from === to || candidate[to].length >= capacity) continue;
-            if (candidate[to].length && candidate[to][candidate[to].length - 1] !== color) continue;
-            const key = `${from}>${to}`;
-            if (previousMove === `${to}>${from}`) continue;
-            options.push({from, to, key, run});
-          }
+    // Start solved, then reverse valid pours. Reversing a legal pour can place
+    // a colour on top of a different colour, creating a mixed but solvable board.
+    const candidate = [];
+    for (let c = 0; c < count; c++) candidate.push([c, c, c, c]);
+    candidate.push([], []);
+    let previous = null;
+    const scrambleMoves = 30 + Math.min(level * 4, 60);
+
+    for (let step = 0; step < scrambleMoves; step++) {
+      const options = [];
+      for (let from = 0; from < candidate.length; from++) {
+        if (!candidate[from].length) continue;
+        const color = candidate[from][candidate[from].length - 1];
+        let topRun = 0;
+        for (let k = candidate[from].length - 1; k >= 0 && candidate[from][k] === color; k--) topRun++;
+        // Leave at least one matching piece behind. Then the reverse of this
+        // move is always a legal forward pour back onto the same colour.
+        if (topRun < 2) continue;
+        for (let to = 0; to < candidate.length; to++) {
+          if (from === to || candidate[to].length >= capacity) continue;
+          if (previous && previous.from === to && previous.to === from) continue;
+          options.push({from, to, color});
         }
-        if (!options.length) break;
-        const move = options[Math.floor(Math.random() * options.length)];
-        const amount = Math.min(move.run, capacity - candidate[move.to].length);
-        for (let k = 0; k < amount; k++) candidate[move.to].push(candidate[move.from].pop());
-        previousMove = move.key;
       }
-    } while (candidate.every(isSolvedBottle));
+      if (!options.length) break;
+      const mixedOptions = options.filter(m => {
+        const dest = candidate[m.to];
+        return dest.length > 0 && dest[dest.length - 1] !== m.color;
+      });
+      const pool = mixedOptions.length && Math.random() < 0.8 ? mixedOptions : options;
+      const move = pool[Math.floor(Math.random() * pool.length)];
+      candidate[move.to].push(candidate[move.from].pop());
+      previous = move;
+    }
+
+    // A defensive fallback prevents an accidental solved board or startup loop.
+    if (candidate.every(isSolvedBottle)) {
+      candidate[0].pop();
+      candidate[count].push(0);
+    }
     bottles = candidate;
     initial = clone(bottles);
     selected = null; moves = 0; history = []; won = false;
@@ -180,7 +181,6 @@ h1{font-size:clamp(21px,5vw,28px);line-height:1.1;margin:0;letter-spacing:-.7px}
       render(); return;
     }
     history.push(clone(bottles));
-    // Pour the complete contiguous run of the top colour, limited by destination space.
     let run = 0;
     for (let k = from.length - 1; k >= 0 && from[k] === top; k--) run++;
     const amount = Math.min(run, capacity - to.length);
