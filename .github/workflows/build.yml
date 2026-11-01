@@ -25,15 +25,21 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Sync Capacitor Android
+      - name: Build Web Assets
         run: |
+          # If you have a build script in package.json (e.g. npm run build), uncomment below:
+          # npm run build
+
+      - name: Add Android Platform & Sync
+        run: |
+          npx cap add android || true
           npx cap sync android
 
       - name: Build Android Release Bundle
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew bundleRelease --stacktrace --info
+          ./gradlew bundleRelease --stacktrace
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
