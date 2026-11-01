@@ -25,16 +25,15 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Add Android Platform & Sync
+      - name: Sync Capacitor Android
         run: |
-          npx cap add android
           npx cap sync android
 
       - name: Build Android Release Bundle
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew bundleRelease
+          ./gradlew bundleRelease --stacktrace
 
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
