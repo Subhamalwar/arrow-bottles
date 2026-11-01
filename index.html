@@ -1,1 +1,216 @@
-<!DOCTYPE html><html><head><title>Arrow Bottles</title></head><body><h1>Arrow Bottles Puzzle Game</h1></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101729">
+<meta name="description" content="Arrow Bottles — a relaxing colour-sort puzzle. Sort every bottle, one smart move at a time.">
+<title>Arrow Bottles</title>
+<style>
+:root{--bg:#101729;--panel:#19243b;--panel2:#202e49;--ink:#f4f7ff;--muted:#a9b6d1;--accent:#8ce7d0;--gold:#ffd166;--danger:#ff7285}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:radial-gradient(ellipse at top,#243454 0%,var(--bg) 60%);color:var(--ink)}
+body{min-height:100dvh;display:flex;justify-content:center}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+.app{width:min(100%,720px);min-height:100dvh;padding:calc(14px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#8ce7d0,#57a8ff);color:#101729;font-size:24px;font-weight:900;box-shadow:0 6px 20px #0003}
+h1{font-size:clamp(21px,5vw,28px);line-height:1.1;margin:0;letter-spacing:-.7px}.subtitle{font-size:12px;color:var(--muted);margin-top:4px}
+.pill{background:#ffffff0d;border:1px solid #ffffff17;padding:8px 11px;border-radius:12px;color:var(--muted);font-size:12px;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:var(--panel);border:1px solid #ffffff12;border-radius:15px;padding:11px;text-align:center}.stat b{display:block;font-size:19px}.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.progress-wrap{height:6px;background:#ffffff12;border-radius:9px;overflow:hidden}.progress{height:100%;width:0;background:linear-gradient(90deg,var(--accent),#57a8ff);transition:width .25s}
+.message{min-height:42px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:14px;padding:0 8px}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 10px;align-content:center;flex:1;padding:4px 0 12px}
+.bottle-wrap{display:flex;justify-content:center;align-items:center;min-height:114px;position:relative}
+.bottle{width:min(62px,17vw);height:clamp(112px,17vh,142px);border:3px solid #dbe9ffb8;border-top:0;border-radius:0 0 17px 17px;position:relative;display:flex;flex-direction:column-reverse;overflow:hidden;background:#ffffff0a;box-shadow:inset 0 0 10px #0002,0 8px 16px #0002;transition:transform .18s,border-color .18s;outline:none}
+.bottle:before{content:"";position:absolute;top:-10px;left:20%;width:60%;height:10px;border:3px solid #dbe9ffb8;border-bottom:0;border-radius:7px 7px 0 0}
+.bottle.selected{transform:translateY(-9px);border-color:var(--gold);box-shadow:0 0 0 3px #ffd16630,0 10px 20px #0003}
+.bottle:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
+.layer{height:25%;width:100%;position:relative;display:grid;place-items:center;border-top:1px solid #ffffff55;transition:height .18s}
+.layer:first-child{border-radius:0 0 12px 12px}
+.arrow{font-size:19px;font-weight:900;color:#ffffffef;text-shadow:0 1px 4px #0005;line-height:1}
+.bottle-number{position:absolute;bottom:-19px;font-size:11px;color:#8493b1}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.btn{border:1px solid #ffffff1b;background:var(--panel2);color:var(--ink);padding:13px 10px;border-radius:14px;font-weight:700;min-height:48px;transition:transform .12s,filter .12s}
+.btn:active{transform:scale(.97)}.btn.primary{background:var(--accent);color:#102135;border:0}.btn:disabled{opacity:.38;cursor:not-allowed}
+.bottom-note{text-align:center;color:#8493b1;font-size:11px;line-height:1.5}
+.overlay{position:fixed;inset:0;background:#070d1bd9;display:none;align-items:center;justify-content:center;padding:22px;z-index:5}.overlay.show{display:flex}.modal{width:min(100%,390px);background:#1a2741;border:1px solid #ffffff22;border-radius:24px;padding:26px;text-align:center;box-shadow:0 25px 70px #0008}.modal .emoji{font-size:44px}.modal h2{margin:8px 0}.modal p{color:var(--muted);line-height:1.5}.modal .btn{width:100%;margin-top:8px}
+@media(min-width:560px){.board{grid-template-columns:repeat(5,minmax(0,1fr));gap:22px 14px}.bottle{width:65px;height:145px}.bottle-wrap{min-height:158px}}
+@media(max-height:690px){.app{gap:10px}.bottle{height:clamp(88px,14vh,112px)}.bottle-wrap{min-height:95px}.board{gap:12px 8px}.message{min-height:30px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="brand"><div class="logo" aria-hidden="true">↗</div><div><h1>Arrow Bottles</h1><div class="subtitle">Sort the colours. Find your flow.</div></div></div>
+    <div class="pill" id="levelPill">LEVEL 1</div>
+  </header>
+  <section class="stats" aria-label="Game statistics">
+    <div class="stat"><b id="moves">0</b><span>Moves</span></div>
+    <div class="stat"><b id="best">—</b><span>Best</span></div>
+    <div class="stat"><b id="levels">0</b><span>Levels won</span></div>
+  </section>
+  <div class="progress-wrap" aria-label="Level progress"><div class="progress" id="progress"></div></div>
+  <div class="message" id="message" aria-live="polite">Tap a bottle, then tap another to pour.</div>
+  <section class="board" id="board" aria-label="Bottle puzzle board"></section>
+  <section class="controls">
+    <button class="btn" id="undoBtn" type="button">↶ Undo</button>
+    <button class="btn" id="restartBtn" type="button">↻ Restart</button>
+    <button class="btn primary" id="nextBtn" type="button" disabled>Next level →</button>
+  </section>
+  <div class="bottom-note">No timer. No pressure. Think one move ahead.<br>Progress is saved on this device.</div>
+</main>
+<div class="overlay" id="winOverlay" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+  <div class="modal"><div class="emoji">✨</div><h2 id="winTitle">Beautifully sorted!</h2><p id="winText">Level complete.</p><button class="btn primary" id="continueBtn" type="button">Continue →</button></div>
+</div>
+<script>
+(() => {
+  "use strict";
+  const COLORS = ["#ff6b6b","#4dabf7","#ffd43b","#69db7c","#cc5de8","#ff922b","#20c997","#f06595"];
+  const ARROWS = ["↑","↗","→","↘","↓","↙","←","↖"];
+  const $ = id => document.getElementById(id);
+  const board = $("board");
+  let level = 1, bottles = [], initial = [], selected = null, moves = 0, history = [], won = false;
+  let wins = 0, bestByLevel = {};
+  try {
+    const saved = JSON.parse(localStorage.getItem("arrowBottlesSave") || "{}");
+    level = Math.max(1, Number(saved.level) || 1);
+    wins = Math.max(0, Number(saved.wins) || 0);
+    bestByLevel = saved.bestByLevel && typeof saved.bestByLevel === "object" ? saved.bestByLevel : {};
+  } catch (_) {}
+  const capacity = 4;
+  const colorCount = () => Math.min(3 + Math.floor((level - 1) / 2), 7);
+  function save() {
+    try { localStorage.setItem("arrowBottlesSave", JSON.stringify({level, wins, bestByLevel})); } catch (_) {}
+  }
+  function shuffled(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  function newPuzzle() {
+    const count = colorCount();
+    // Begin from a solved board and scramble only with legal pours. Every
+    // generated position is therefore reachable from a solved position.
+    let candidate;
+    do {
+      candidate = [];
+      for (let c = 0; c < count; c++) candidate.push([c, c, c, c]);
+      candidate.push([], []);
+      let previousMove = "";
+      const scrambleMoves = 24 + Math.min(level * 3, 45);
+      for (let step = 0; step < scrambleMoves; step++) {
+        const options = [];
+        for (let from = 0; from < candidate.length; from++) {
+          const src = candidate[from];
+          if (!src.length) continue;
+          const color = src[src.length - 1];
+          let run = 0;
+          for (let k = src.length - 1; k >= 0 && src[k] === color; k--) run++;
+          for (let to = 0; to < candidate.length; to++) {
+            if (from === to || candidate[to].length >= capacity) continue;
+            if (candidate[to].length && candidate[to][candidate[to].length - 1] !== color) continue;
+            const key = `${from}>${to}`;
+            if (previousMove === `${to}>${from}`) continue;
+            options.push({from, to, key, run});
+          }
+        }
+        if (!options.length) break;
+        const move = options[Math.floor(Math.random() * options.length)];
+        const amount = Math.min(move.run, capacity - candidate[move.to].length);
+        for (let k = 0; k < amount; k++) candidate[move.to].push(candidate[move.from].pop());
+        previousMove = move.key;
+      }
+    } while (candidate.every(isSolvedBottle));
+    bottles = candidate;
+    initial = clone(bottles);
+    selected = null; moves = 0; history = []; won = false;
+    $("nextBtn").disabled = true;
+    $("message").textContent = "Tap a bottle, then tap another to pour.";
+    $("winOverlay").classList.remove("show");
+    render();
+  }
+  function clone(x) { return x.map(b => b.slice()); }
+  function isSolvedBottle(b) { return b.length === 0 || (b.length === capacity && b.every(v => v === b[0])); }
+  function solved() { return bottles.every(isSolvedBottle); }
+  function render() {
+    board.innerHTML = "";
+    bottles.forEach((b, i) => {
+      const wrap = document.createElement("div"); wrap.className = "bottle-wrap";
+      const button = document.createElement("button");
+      button.className = "bottle" + (selected === i ? " selected" : "");
+      button.type = "button"; button.setAttribute("aria-label", `Bottle ${i + 1}, ${b.length} of ${capacity} pieces${selected === i ? ", selected" : ""}`);
+      button.setAttribute("aria-pressed", selected === i ? "true" : "false");
+      b.forEach((c, j) => {
+        const layer = document.createElement("div"); layer.className = "layer";
+        layer.style.background = COLORS[c];
+        const arrow = document.createElement("span"); arrow.className = "arrow"; arrow.textContent = ARROWS[(c + j + level) % ARROWS.length];
+        layer.appendChild(arrow); button.appendChild(layer);
+      });
+      button.addEventListener("click", () => tapBottle(i));
+      wrap.appendChild(button);
+      const number = document.createElement("span"); number.className = "bottle-number"; number.textContent = i + 1; wrap.appendChild(number);
+      board.appendChild(wrap);
+    });
+    $("moves").textContent = moves;
+    $("best").textContent = bestByLevel[level] || "—";
+    $("levels").textContent = wins;
+    $("levelPill").textContent = `LEVEL ${level}`;
+    $("progress").style.width = `${Math.round(bottles.filter(isSolvedBottle).length / bottles.length * 100)}%`;
+    $("undoBtn").disabled = history.length === 0 || won;
+    $("restartBtn").disabled = false;
+    $("nextBtn").disabled = !won;
+  }
+  function tapBottle(i) {
+    if (won) return;
+    if (selected === null) {
+      if (!bottles[i].length) { $("message").textContent = "That bottle is empty. Choose one with colour."; return; }
+      selected = i; $("message").textContent = "Now choose a bottle with space and a matching top colour."; render(); return;
+    }
+    if (selected === i) { selected = null; $("message").textContent = "Selection cleared. Choose a bottle."; render(); return; }
+    const from = bottles[selected], to = bottles[i];
+    if (!from.length) { selected = null; render(); return; }
+    if (to.length >= capacity) { selected = i; $("message").textContent = "That bottle is full. Choose a bottle with space."; render(); return; }
+    const top = from[from.length - 1];
+    if (to.length && to[to.length - 1] !== top) {
+      selected = i;
+      $("message").textContent = "Colours must match. Try a bottle with the same top colour.";
+      render(); return;
+    }
+    history.push(clone(bottles));
+    // Pour the complete contiguous run of the top colour, limited by destination space.
+    let run = 0;
+    for (let k = from.length - 1; k >= 0 && from[k] === top; k--) run++;
+    const amount = Math.min(run, capacity - to.length);
+    for (let k = 0; k < amount; k++) to.push(from.pop());
+    moves++; selected = null;
+    if (solved()) {
+      won = true; wins++;
+      bestByLevel[level] = bestByLevel[level] ? Math.min(bestByLevel[level], moves) : moves;
+      save(); $("message").textContent = "All bottles sorted. Great work!";
+      $("winText").textContent = `You solved Level ${level} in ${moves} moves. Ready for the next challenge?`;
+      $("winOverlay").classList.add("show");
+    } else {
+      $("message").textContent = amount > 1 ? `Nice move — poured ${amount} matching pieces.` : "Good move. Keep sorting.";
+    }
+    render();
+  }
+  $("undoBtn").addEventListener("click", () => {
+    if (!history.length || won) return;
+    bottles = history.pop(); moves = Math.max(0, moves - 1); selected = null;
+    $("message").textContent = "Last move undone."; render();
+  });
+  $("restartBtn").addEventListener("click", () => {
+    bottles = clone(initial); selected = null; moves = 0; history = []; won = false;
+    $("winOverlay").classList.remove("show"); $("message").textContent = "Fresh start. You can solve this."; render();
+  });
+  function nextLevel() { level++; save(); newPuzzle(); }
+  $("nextBtn").addEventListener("click", nextLevel);
+  $("continueBtn").addEventListener("click", nextLevel);
+  newPuzzle();
+})();
+</script>
+</body>
+</html>
