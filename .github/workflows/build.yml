@@ -16,10 +16,11 @@ concurrency:
 
 jobs:
   source-tests:
-    name: Source smoke tests
+    name: Original Game Source Validation
     runs-on: ubuntu-24.04
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v5
 
       - name: Set up Node.js
@@ -27,14 +28,38 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Run source smoke tests
+      - name: Verify original game bundle
+        run: |
+          set -eu
+
+          test -f www/index.html
+
+          SIZE=$(wc -c < www/index.html)
+
+          echo "Game bundle size: ${SIZE} bytes"
+
+          if [ "$SIZE" -lt 500000 ]; then
+            echo "ERROR: Original game bundle appears to be missing."
+            exit 1
+          fi
+
+          grep -q 'window.AB' www/index.html
+          grep -q 'js/meta/daily.js' www/index.html
+
+          echo "Original game bundle validation passed."
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run automated tests
         run: npm test
 
   android-build:
     name: Build Android APK and AAB
     runs-on: ubuntu-24.04
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v5
 
       - name: Set up Node.js
@@ -53,31 +78,51 @@ jobs:
         with:
           packages: 'platform-tools'
 
-      - name: Install Android 16 SDK
+      - name: Install Android SDK 36
         run: |
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
           yes | sdkmanager --licenses >/dev/null || true
 
       - name: Verify required files
         run: |
+          set -eu
           test -f package.json
           test -f capacitor.config.json
-          test -f index.html
+          test -f www/index.html
+
+          SIZE=$(wc -c < www/index.html)
+          test "$SIZE" -gt 500000
+
+          grep -q 'window.AB' www/index.html
+          grep -q 'js/meta/daily.js' www/index.html
 
       - name: Install dependencies
         run: npm install
 
-      - name: Run source smoke tests
+      - name: Run automated tests
         run: npm test
 
       - name: Prepare web assets
         run: |
-          mkdir -p www
-          cp index.html www/
-          if [ -f manifest.webmanifest ]; then cp manifest.webmanifest www/; fi
-          if [ -f sw.js ]; then cp sw.js www/; fi
-          if [ -d assets ]; then cp -R assets www/; fi
-          echo "Prepared web files:"
+          set -eu
+
+          # Never overwrite the original game bundle.
+          test -f www/index.html
+
+          # Copy optional files only if they are missing.
+          for FILE in manifest.webmanifest sw.js; do
+            if [ ! -f "www/$FILE" ] && [ -f "$FILE" ]; then
+              cp "$FILE" "www/$FILE"
+            fi
+          done
+
+          if [ -d assets ]; then
+            cp -Rn assets/. www/ || true
+          fi
+
+          echo "Verified game bundle:"
+          wc -c www/index.html
+
           find www -maxdepth 3 -type f
 
       - name: Generate Android project
@@ -86,11 +131,15 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Verify Android target SDK
+      - name: Verify Android SDK configuration
         run: |
-          echo "Generated SDK configuration:"
-          grep -nE 'compileSdkVersion|targetSdkVersion|minSdkVersion' android/variables.gradle
-          grep -qE 'targetSdkVersion[[:space:]]*=[[:space:]]*36' android/variables.gradle
+          grep -nE \
+            'compileSdkVersion|targetSdkVersion|minSdkVersion' \
+            android/variables.gradle
+
+          grep -qE \
+            'targetSdkVersion[[:space:]]*=[[:space:]]*36' \
+            android/variables.gradle
 
       - name: Build debug APK
         working-directory: android
