@@ -1,0 +1,1 @@
+v4.2: Fixed Woven Maze projection: orthogonal lines are now perfectly straight at every level. Circular Orbit Maze intentionally retains curves. Native banner is now requested on map screen:shown and retried after consent:changed, instead of during map mount. Requires Android APK validation and internet/consent for Google test ads. 300 level solvability retained.

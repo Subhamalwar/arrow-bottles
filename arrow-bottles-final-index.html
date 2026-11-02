@@ -3452,8 +3452,7 @@ window.AB = window.AB || {};
       if (!AB.ads.bannerAllowed()) return null;
       log('banner', 'map', currentLevel());
       if (native()) {
-        if (nativeAds()) nativeAds().showBanner().catch(e => console.warn('[ads] banner unavailable', e));
-        return null; // Native banner is drawn outside the WebView.
+        return null; // Native banner is drawn outside the WebView; screen:shown triggers it.
       }
       return el('div', { class: 'ab-banner', role: 'complementary', 'aria-label': 'Advertisement' },
         el('span', { class: 'ab-banner-tag' }, 'AD'), el('span', {}, 'Browser demo banner (no revenue)'));
@@ -3462,7 +3461,28 @@ window.AB = window.AB || {};
   };
 
   AB.onInit(() => {
-    AB.bus.on('screen:shown', e => { if (e && e.name !== 'map' && nativeAds()) nativeAds().hideBanner(); });
+    // Trigger native banner only after map is mounted; also retry after consent changes.
+    // Previous implementation called showBanner while mounting the map, before the
+    // screen was fully active, and never retried after the consent dialog closed.
+    let bannerRequest = 0;
+    const refreshBanner = () => {
+      const ads = nativeAds();
+      if (!native() || !ads) return;
+      const token = ++bannerRequest;
+      const onMap = AB.router && AB.router.current() === 'map';
+      if (!onMap || !AB.ads.bannerAllowed()) {
+        ads.hideBanner().catch(e => console.warn('[ads] banner hide failed', e));
+        return;
+      }
+      Promise.resolve().then(() => {
+        if (token !== bannerRequest || AB.router.current() !== 'map') return;
+        return ads.showBanner().then(ok => {
+          if (!ok && token === bannerRequest) console.warn('[ads] native banner not loaded; check consent, network, and Android AdMob logs');
+        });
+      }).catch(e => console.warn('[ads] banner show failed', e));
+    };
+    AB.bus.on('screen:shown', refreshBanner);
+    AB.bus.on('consent:changed', refreshBanner);
     AB.bus.on('level:start', () => { session.boughtThisLevel = false; });
     AB.bus.on('item:bought', () => { session.boughtThisLevel = true; });
     AB.bus.on('level:failed', () => AB.ads.noteFail());
@@ -5445,9 +5465,9 @@ window.AB = window.AB || {};
         const a=g.start + (y+0.5)*g.span/this.session.h;
         return [g.half + r*Math.cos(a),g.half + r*Math.sin(a)];
       }
-      // A bounded smooth distortion removes the look of isolated mini-grids.
-      return [x+1.15+0.22*Math.sin(y*0.61)+0.12*Math.sin(x*0.51+y*0.29),
-              y+1.15+0.29*Math.sin(x*0.48+y*0.13)];
+      // Orthogonal Woven Maze: grid rows/columns must be mathematically straight.
+      // Difficulty comes from global dependencies, not from distorting the geometry.
+      return [x + 1.15, y + 1.15];
     }
     // Canvas-local CSS px for any logical (possibly fractional) grid coordinate.
     scr(x, y) { const k = this.scale(), [wx,wy]=this.worldPoint(x,y);
