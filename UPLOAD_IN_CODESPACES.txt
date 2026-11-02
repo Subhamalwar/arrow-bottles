@@ -1,0 +1,24 @@
+UPLOAD ARROW ESCAPE v3 TO GITHUB CODESPACES
+
+1. In your existing repository Codespace (on main), upload the ZIP into the root of your repository.
+2. Open Terminal -> New Terminal.
+3. Copy and paste this block:
+
+unzip -o arrow-escape-v3-ready-for-github.zip
+cp -a arrow-escape/. ./
+rm -rf arrow-escape
+rm -f arrow-escape-v3-ready-for-github.zip
+if [ -d .github/workflows/.github ]; then git rm -r .github/workflows/.github; fi
+npm install --no-audit --no-fund
+npm test
+npm run build:web
+
+4. If all commands pass, commit and push:
+
+git add -A
+git commit -m "Arrow Escape v3 - intertwined puzzles and Puzzle IQ"
+git push origin main
+
+5. Download the APK from https://github.com/Subhamalwar/arrow-bottles/actions
+
+Warning: Different debug signing key may require uninstalling your old APK, which can erase local progress.

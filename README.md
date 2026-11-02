@@ -1,72 +1,52 @@
-# Arrow Escape — Android source (v2.0)
+# Arrow Escape v3 — intertwined logic campaign
 
-Timed arrow-path puzzle built with HTML5/CSS/JavaScript and Capacitor 8. This repo keeps the original app ID (`com.arrowbottles.game`) so updates preserve your on-device app storage. The displayed app name is **Arrow Escape**.
+**Ready-to-upload GitHub source.** Android application ID remains `com.arrowbottles.game` so existing install identity is unchanged. This v3 package upgrades the gameplay from the previous v2 source while preserving the Capacitor Android and native AdMob integration.
 
-## What is implemented
+## Gameplay improvements implemented
 
-- All **300 campaign boards** are kept and sorted by measured complexity (arrow count and total path cells). Arrow count never drops when advancing to the next level; tie levels have a progressively tighter countdown. The former repeating easy → medium → boss cadence is removed. All 300 layouts are verified solvable with the included session solver.
-- Timed campaign/daily play instead of move-limited failure. A blocked tap costs **2 seconds**; Shield protects it; Undo refunds the last blocked penalty. Practice/tutorial remains untimed. Stars still reflect accurate taps.
-- Countdown pauses when opening the pause panel, leaving the app, or seeing reward/failure panels, and resumes with saved remaining time. Old saves from move-based versions get a fresh countdown.
-- After time expires, players may get **up to two 20-second extensions per attempt** via eligible rewarded video, coins, or VIP entitlement. Count persists across app restarts. On giving up or after both extensions, retry/map remains available.
-- Rewarded ad offers: **double coins on every paid campaign win**, gems, spin extras, hearts, bottle rewards, and time extension. One reward is granted only after the native Google Mobile Ads SDK confirms it; failed/skipped native ads never pay out.
-- In the Android build, optional **AdMob banner** on the map after Level 30, and frequency-capped interstitial ads between won levels. Banner is native and the WebView is inset to avoid obscuring controls.
-- Google's UMP consent flow is called before the mobile ads SDK initializes; a privacy-choice entry point is present in Settings.
-- **Google Play Billing is not integrated.** Native app real-money IAP buttons are labelled *Coming soon* / disabled. Browser simulator is for QA only. Do not sell virtual items without validated purchases.
-- Debug APK and release AAB GitHub Actions workflow, with optional signing secrets, Android target SDK 36 and minimum SDK **24** (required by the AdMob plugin).
+- **300 deterministic campaign levels** regenerated as denser, intertwined braid puzzles. They use winding shafts, directional blocking chains, varied S/U-shaped paths and occasional key locks. Every campaign board passes the actual in-game solver. Some arrows start unblocked; all levels can be solved without buying a power-up.
+- **Exact +4 arrows per level through level 20:** level 1 = 12; level 2 = 16; level 5 = 28; level 10 = 48; level 20 = 88. Later levels grow from 88 to 132 arrows more gradually as logic complexity increases, to avoid unreadably crowded layouts on phones.
+- **Thin stick arrows:** reduced from 36% to about 14.5% of the tile width for campaign and daily (tutorial retains thicker arrows). Heads and glyphs are smaller. Touch-selection tolerance follows tile scale to avoid grabbing a neighbor. Zoom-in `+`, existing pinch zoom and `Fit` are available on wider boards.
+- **Puzzle IQ:** visible in the game header, level picker and victory panel. It is an **in-game challenge rating**, NOT a medical/psychometric IQ score and not a measure of players' intelligence. Scores use the level progression and path-turn complexity. They are nondecreasing.
+- **Longer, more complex levels:** timing budgets scale with arrow count; removing each arrow remains the core challenge. No artificial delays or forced advertisement watching. Intended median completion-time progression must still be calibrated by actual player tests, not assumed from arrow count.
+- Retains v2's countdown, two optional 20-second extensions, rewarded opportunities, banner/interstitial support, no mandatory login, heart system and missions. Real native rewarded payout still depends on the AdMob SDK confirmation. Google Play Billing **is not integrated**.
+- Old v2 *in-progress* campaign resume snapshots aren't restored onto a different board. Completed level numbers, stars, coins and other stored data remain in local storage, although these levels now have **new layouts**.
 
-## How to build using GitHub on Android tablet
+## Install in GitHub Codespaces on an Android tablet
 
-1. Upload the extracted contents of this folder into the root of your GitHub repository, replacing the matching files, and remove any old nested `.github/workflows/.github/...` workflow files.
-2. In GitHub, open **Actions → Build Arrow Escape Android → Run workflow**, or push the changes to `main`.
-3. The workflow installs Node/Capacitor/AdMob dependencies, runs tests, bundles the native bridge, creates Android, configures the manifest, then builds `app-debug.apk` and `app-release.aab`.
-4. Open the successful run and download `arrow-escape-android-*` from **Artifacts**.
-5. Install the APK and test Levels 1–10, Level 30, pause/restore, timer expiry, both extensions, rewards, ads, and rotation on your own Android device.
+The ZIP contains an `arrow-escape/` folder with the repo source. Open your Codespace on the `main` branch and upload `arrow-escape-v3-ready-for-github.zip` into the **root of the repository** using Explorer → Upload. Then open Terminal → New Terminal and run:
 
-### AdMob setup before enabling real monetisation
-
-The Android source has your **AdMob app ID** `ca-app-pub-6081700970691881~6352526941` and your **live Android banner unit** `ca-app-pub-6081700970691881/7399061483` included as build defaults. AdMob identifiers are public config, not passwords; both can be overridden with GitHub Actions secrets. **All ads use Google's official demo units until production is explicitly enabled.**
-
-In GitHub **Settings → Secrets and variables → Actions**, add the repository **variable** `ADMOB_PRODUCTION` with value `true` only when the AdMob app is ready, its privacy/consent messages are configured, and you intend to serve real ads. When enabled, your supplied banner ID is used; missing rewarded and interstitial unit IDs are **disabled**, not silently replaced with demo ads.
-
-When ready to add additional formats, create the **Android Rewarded** and **Interstitial** ad units in AdMob, then add these repository **secrets**:
-
-- `ADMOB_REWARDED_UNIT_ID` (format `ca-app-pub-.../...`)
-- `ADMOB_INTERSTITIAL_UNIT_ID` (format `ca-app-pub-.../...`)
-
-Optional overrides: `ADMOB_APP_ID` and `ADMOB_BANNER_UNIT_ID` (both already configured in the code). The generated `www/ad-status.txt` tells you exactly which formats are live. Google demo units generate **no revenue**. Do not click your own live ads; use demo IDs or register test devices while testing.
-
-**No Google Play login is needed.** Google Play Games sign-in and cloud saves would be separate features and are not integrated here; guest/offline gameplay remains available.
-
-### Optional Play Store signing
-
-For signed release builds add four repository **secrets**:
-
-- `ANDROID_KEYSTORE_BASE64` (your keystore file encoded with base64, no surrounding quotes)
-- `ANDROID_KEYSTORE_PASSWORD`
-- `ANDROID_KEY_ALIAS`
-- `ANDROID_KEY_PASSWORD`
-
-If not provided, the AAB is **unsigned** and **cannot be submitted directly** to Google Play. Keep your upload key secure; do not commit the keystore. Check `www/signing-status.txt` inside the build artifact. Play Console listing, testing, app signing enrollment and policy declarations are separate release steps.
-
-## Local development
-
-```sh
-npm install
+```bash
+unzip -o arrow-escape-v3-ready-for-github.zip
+cp -a arrow-escape/. ./
+rm -rf arrow-escape
+rm -f arrow-escape-v3-ready-for-github.zip
+# Remove the obsolete nested workflow folder ONLY if it exists:
+if [ -d .github/workflows/.github ]; then git rm -r .github/workflows/.github; fi
+npm install --no-audit --no-fund
 npm test
 npm run build:web
-npx cap add android
-npx cap sync android
-python3 scripts/configure_android_ads.py
-python3 scripts/configure_android_signing.py
-cd android && ./gradlew assembleDebug bundleRelease
+git add -A
+git commit -m "Arrow Escape v3 - intertwined puzzles and Puzzle IQ"
+git push origin main
 ```
 
-`npm run build:web` replaces the browser-only `www/native-ads-bridge.js` stub with the real Capacitor/AdMob JS bridge. **Never publish using the stub.** The workflow does this automatically. For web preview, demo UI ads and demo purchases do not produce real income.
+If any command reports a failure, stop and check it before committing. Do not run `git push` if tests fail. `npm install` updates the `package-lock.json` present in your repository; this package intentionally does not include the stale v2 lockfile. The updated Actions workflow uses `npm install`, avoiding the prior `npm ci`/esbuild optional-dependency lock mismatch.
 
-## Validation and blockers
+Open [GitHub Actions](https://github.com/Subhamalwar/arrow-bottles/actions). After **Build Arrow Escape Android** succeeds, download the `arrow-escape-android-*` artifact and extract `android/app/build/outputs/apk/debug/app-debug.apk` to install on your Android tablet. A release AAB is also built; Google Play requires your own signing secrets.
 
-- `npm test` exercises the actual session engine, all 300 campaign solvers, level order, countdown expiration, extension snapshot/restore, tutorial and native-ad guards.
-- Browser smoke tests exercise the countdown, timeout dialog and 20-second coin continuation.
-- A complete Android Gradle build and live AdMob SDK test cannot be verified in this editing environment (required packages and Android SDK not available locally). Confirm using the GitHub Actions run and your Android device.
-- **Native monetisation requires your own AdMob app and unit IDs, Google UMP setup, and real app installs.** Google Play Billing is intentionally disabled until secure purchase verification is implemented.
-- Because level IDs are re-ordered, existing saved progress remains unlocked but a replayed level may show a different layout than before. Back up important game progress before upgrading.
+**Installation note:** GitHub builds can use different debug signing keys between runs. If Android shows *App not installed as package conflicts with an existing package*, the old APK is signed differently. Uninstalling the old app may delete locally stored gameplay progress. Back up important game data before removing it.
+
+## Tests and validation
+
+`npm test` runs the existing 14 tests plus 6 v3-specific tests covering exact +4 progression, all 300 board continuity, non-overlap, intertwining, Puzzle IQ, touch/zoom, and snapshot compatibility. All 300 boards are also run through the game's own solvability algorithm. A browser smoke test opened Levels 1 and 20, rendered the game, used the zoom button and reported no JS runtime errors.
+
+**Not yet verified here:** native Gradle APK/AAB build, AdMob ad delivery on device, real user completion times, tablet accessibility/touch comfort, or Google Play release signing. Test on the tablet before treating v3 as release-ready.
+
+## Build configuration and monetisation
+
+- Application ID: `com.arrowbottles.game`; Android target SDK 36, min SDK 24.
+- Default AdMob app ID `ca-app-pub-6081700970691881~6352526941` and banner unit `ca-app-pub-6081700970691881/7399061483` are configured; test ads are used by default. Live ads require repo variable `ADMOB_PRODUCTION=true` and production setup/consent.
+- For real rewarded or interstitial ads supply `ADMOB_REWARDED_UNIT_ID` / `ADMOB_INTERSTITIAL_UNIT_ID` secrets; otherwise production versions of these formats stay disabled.
+- Signed release AAB requires `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` secrets. An unsigned AAB is not Play Store upload ready.
+- To regenerate layouts: `python3 scripts/build_v3_levels.py scripts/v3-campaign.json` and re-embed the generated JSON in `www/index.html` and `arrow-bottles-final-index.html`. The generator includes an independent solver assertion for all levels. `scripts/assemble_v3.py` was used once to apply UI patches to the original v2 source; don't rerun it over an already-updated v3 file as it expects v2 markers.

@@ -1,8 +1,8 @@
 {
   "name": "arrow-bottles",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "Arrow Escape \u2014 progressive timed arrow puzzle with Capacitor Android and AdMob integration",
+  "description": "Arrow Escape v3 - intertwined braids, progressive arrows, Puzzle IQ, countdown and AdMob",
   "scripts": {
     "test": "node --test",
     "build:web": "esbuild src/native-ads-bridge.js --bundle --platform=browser --format=iife --target=es2020 --outfile=www/native-ads-bridge.js",
