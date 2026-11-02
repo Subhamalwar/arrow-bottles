@@ -1557,7 +1557,7 @@ AB.TUTORIAL = [{"w":5,"h":6,"tier":"tutorial","moveLimit":8,"spare":5,"arrows":[
       changed();
       return true;
     },
-    // The attempt ended without refund (give up / retry / leave with wasted taps): heart stays taken.
+    // The attempt ended without refund (give up / retry / leave): heart stays taken.
     forfeit(levelId) {
       const loan = S().heartLoan;
       if (loan && (levelId === undefined || loan.levelId === String(levelId))) {
@@ -4803,6 +4803,18 @@ window.AB = window.AB || {};
           actionRow('Profile', 'Avatar, name and achievements', () => AB.router.show('profile')),
           notif,
           privacyRow,
+          actionRow('Ad diagnostics', 'Check banner, consent and rewarded ad status', () => {
+            const ads = window.ABNativeAds;
+            if (!ads || !ads.diagnostics) { AB.ui.toast('Native ad diagnostics unavailable in browser'); return; }
+            const render = status => {
+              const msg = Object.entries(status).map(([k,v]) => k + ': ' + (typeof v === 'object' ? JSON.stringify(v) : String(v))).join('\n');
+              AB.ui.dialog({ title: 'Ad diagnostics', body: el('div', {style:'white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px'}, msg), buttons: [
+                {label:'Retry banner', kind:'primary', onClick: () => { ads.showBanner().then(() => ads.diagnostics()).then(render); }},
+                {label:'Close', kind:'secondary'}
+              ] });
+            };
+            Promise.resolve(ads.diagnostics()).then(render).catch(e => AB.ui.toast('Diagnostics unavailable: ' + String(e)));
+          }),
           actionRow('Ad privacy choices', 'Google consent preferences', () => {
             if (window.ABNativeAds && window.ABNativeAds.privacyOptions)
               window.ABNativeAds.privacyOptions().catch(() => AB.ui.toast('Privacy form is unavailable'));
@@ -6564,14 +6576,13 @@ window.AB = window.AB || {};
   }
   function clearResume() { if (S().resume) AB.store.update(sv => { sv.resume = null; }); }
 
-  // leaving mid-level (pause → Map, or navigation away): R-HEART-1
+  // Leaving an attempt always consumes the heart, even without an unsuccessful move.
   function leaveAttempt(g) {
     g.ended = true;
     stopCountdown(g);
     clearResume();
     if (usesHearts(g) && g.heartHeld && AB.hearts) {
-      if (g.session.wasted() === 0 && g.session.status === 'playing') AB.hearts.refund(g.levelId);
-      else if (AB.hearts.forfeit) AB.hearts.forfeit(g.levelId);
+      if (AB.hearts.forfeit) AB.hearts.forfeit(g.levelId);
       g.heartHeld = false;
     }
   }
@@ -7000,7 +7011,7 @@ window.AB = window.AB || {};
     const wasted = g.session.wasted();
     // T3-01: the first-run tutorial can't be left before it is done (R-TUT-1/6/7): Resume + Restart only.
     const firstRunTut = g.mode === 'tutorial' && !S().tutorialDone;
-    const costs = usesHearts(g) && g.heartHeld && wasted > 0 && !(AB.hearts.unlimited && AB.hearts.unlimited());
+    const costs = usesHearts(g) && g.heartHeld && !(AB.hearts.unlimited && AB.hearts.unlimited());
     const st = settings();
     const set = (k, v) => AB.store.setSetting(k, v);
     const toggles = el('div', { class: 'g-pause-toggles ab-card ab-list' },
@@ -7023,8 +7034,8 @@ window.AB = window.AB || {};
   function doRestart(g) {
     const s = g.session;
     if (usesHearts(g) && g.heartHeld && AB.hearts) {
-      if (s.wasted() === 0) AB.hearts.refund(g.levelId);
-      else { recordFailAttempt(g); if (AB.hearts.forfeit) AB.hearts.forfeit(g.levelId); }
+      if (s.wasted() > 0) recordFailAttempt(g);
+      if (AB.hearts.forfeit) AB.hearts.forfeit(g.levelId);
       g.heartHeld = false;
     }
     clearResume();

@@ -58,3 +58,9 @@ git push origin main
 - Removed offset dark under-stroke and off-axis glossy highlight from arrows. Paths use a single centered main stroke, keeping intentional Orbit Maze turns.
 - Rewarded ad attempts show loading/unavailable messages. Rewards are still granted only on SDK confirmation.
 - Run `npm install --no-audit --no-fund && npm test && npm run build:web` in Codespaces before committing. Native ad display requires an Android APK; browser tests do not validate AdMob loading.
+
+### v4.3 Heart and AdMob diagnostics update
+- Starting an attempt charges one heart; abandoning to Map or restarting consumes it, even without mistakes. Winning still refunds the heart as a completion reward. App process closure preserves the saved attempt for resume, without a second charge.
+- Settings → Ad diagnostics displays native platform, consent, SDK, banner load and rewarded status, errors and a retry action. Use on a real Android APK.
+- AdMob application ID: `ca-app-pub-6081700970691881~6352526941`; production banner unit: `ca-app-pub-6081700970691881/7399061483`. **Default builds still use Google demo IDs**, so enable `ADMOB_PRODUCTION=true` only after testing and privacy compliance. Banner requires consent and a successful native SDK request.
+- Android build workflow generates `www/native-ads-bridge.js` with `npm run build:web`. A placeholder bundled file in the source ZIP is not a native ad implementation until the build completes.
