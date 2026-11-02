@@ -50,6 +50,6 @@ test('thin arrow shafts, small tips, touch tolerance, and zoom controls exist', 
   assert.match(html, /this\.zoomAt\(this\.VW \/ 2/);
 });
 test('resume snapshots from a different campaign layout are not blindly reused', () => {
-  assert.match(html, /r\.layoutVersion === 3/);
-  assert.match(html, /layoutVersion: 3/);
+  assert.match(html, /r\.layoutVersion === 4/);
+  assert.match(html, /layoutVersion: 4/);
 });

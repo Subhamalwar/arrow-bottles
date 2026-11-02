@@ -1,8 +1,8 @@
 {
   "name": "arrow-bottles",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
-  "description": "Arrow Escape v3 - intertwined braids, progressive arrows, Puzzle IQ, countdown and AdMob",
+  "description": "Arrow Escape v4 - mobile-first unified woven and circular orbit puzzles with Puzzle IQ, timers and AdMob",
   "scripts": {
     "test": "node --test",
     "build:web": "esbuild src/native-ads-bridge.js --bundle --platform=browser --format=iife --target=es2020 --outfile=www/native-ads-bridge.js",

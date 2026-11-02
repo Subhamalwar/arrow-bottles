@@ -1,24 +1,23 @@
-UPLOAD ARROW ESCAPE v3 TO GITHUB CODESPACES
+ARROW ESCAPE v4 — MOBILE FIRST, GLOBAL WEAVE + CIRCULAR ORBITS
 
-1. In your existing repository Codespace (on main), upload the ZIP into the root of your repository.
-2. Open Terminal -> New Terminal.
-3. Copy and paste this block:
+Upload arrow-escape-v4-mobile-first.zip into the ROOT of your Codespaces repository.
+Then paste into Terminal:
 
-unzip -o arrow-escape-v3-ready-for-github.zip
+unzip -o arrow-escape-v4-mobile-first.zip
 cp -a arrow-escape/. ./
 rm -rf arrow-escape
-rm -f arrow-escape-v3-ready-for-github.zip
+rm -f arrow-escape-v4-mobile-first.zip
 if [ -d .github/workflows/.github ]; then git rm -r .github/workflows/.github; fi
 npm install --no-audit --no-fund
 npm test
 npm run build:web
 
-4. If all commands pass, commit and push:
+ONLY IF ALL SUCCEED:
 
 git add -A
-git commit -m "Arrow Escape v3 - intertwined puzzles and Puzzle IQ"
+git commit -m "Arrow Escape v4 - mobile-first orbit puzzles"
 git push origin main
 
-5. Download the APK from https://github.com/Subhamalwar/arrow-bottles/actions
+Go to https://github.com/Subhamalwar/arrow-bottles/actions and download the built Android artifact.
 
-Warning: Different debug signing key may require uninstalling your old APK, which can erase local progress.
+Be aware: reinstalling an APK with a different debug signature may require uninstalling the previous version (local progress could be erased).
