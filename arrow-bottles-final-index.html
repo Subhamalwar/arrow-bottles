@@ -3394,7 +3394,7 @@ window.AB = window.AB || {};
     // R-ADS-1: resolves true only if watched to the end; false if capped or skipped.
     rewarded(placement, ctx) {
       if (!AB.ads.canRewarded(placement)) {
-        AB.ui.toast('No more videos today. Come back tomorrow');
+        AB.ui.toast(AB.ads.remaining(placement) <= 0 ? 'No more videos today. Come back tomorrow' : 'Video ads unavailable. Please try again later');
         return Promise.resolve(false);
       }
       const go = () => {
@@ -3403,6 +3403,7 @@ window.AB = window.AB || {};
         write(s => { s.lastRewardedAt = AB.clock.now(); });
         // Native rewards are granted ONLY after the mobile SDK confirms an earned reward.
         // Never turn a failed AdMob request into a fake / rewarded test overlay on Android.
+        if (native()) AB.ui.toast('Loading rewarded video…');
         const playback = native() ? (nativeAds() ? nativeAds().rewarded() : Promise.resolve(false)) : rewardedOverlay(placement);
         return playback.catch(e => { console.warn('[ads] rewarded unavailable', e); return false; }).then(ok => {
           write(s => {
@@ -3410,6 +3411,7 @@ window.AB = window.AB || {};
             if (ok) { s.counts[placement] = (s.counts[placement] || 0) + 1; s.total++; }
           });
           if (ok) AB.bus.emit('ad:rewarded', { placement });
+          else if (native()) AB.ui.toast('Ad unavailable or not completed. No reward was used.');
           return ok;
         });
       };
@@ -3444,7 +3446,7 @@ window.AB = window.AB || {};
     // R-ADS-3
     bannerAllowed() {
       const s = AB.store.get();
-      return (s.maxCleared || 0) >= 30 && !removeAds() && !vip() && consentGiven();
+      return !removeAds() && !vip() && consentGiven();
     },
     banner() {
       if (!AB.ads.bannerAllowed()) return null;
@@ -5680,7 +5682,7 @@ window.AB = window.AB || {};
       const col = a.color % 5, main = C.main[col], dark = C.dark[col];
       const q=pts[pts.length-1], p=pts[pts.length-2], mag=Math.hypot(q[0]-p[0],q[1]-p[1])||1;
       const dx=(q[0]-p[0])/mag,dy=(q[1]-p[1])/mag,nx=-dy,ny=dx;
-      const head = pts[pts.length - 1], TL = k * 0.29, TW = k * 0.19, drop = Math.max(0.65, sw * 0.1);
+      const head = pts[pts.length - 1], TL = k * 0.29, TW = k * 0.19;
       const line = (off, lw, style) => {
         ctx.strokeStyle = style; ctx.lineWidth = lw; ctx.beginPath();
         pts.forEach(([x, y], i) => i ? ctx.lineTo(x + off[0], y + off[1]) : ctx.moveTo(x + off[0], y + off[1])); ctx.stroke();
@@ -5704,13 +5706,8 @@ window.AB = window.AB || {};
         line([0, 0], sw + Math.max(4, k * 0.14), C.gold); tri([0, 0], Math.max(2, k * 0.07), C.gold);
         ctx.shadowBlur = 0;
       }
-      if (col === 3) { line([0, drop * 0.5], sw + Math.max(2, sw * 0.22), dark); tri([0, drop * 0.5], Math.max(1, sw * 0.11), dark); }
-      line([0, drop], sw, dark); tri([0, drop], 0, dark);
+      // One center-aligned stroke only: offset shadow/highlight strokes caused apparent bends on phones.
       line([0, 0], sw, main); tri([0, 0], 0, main);
-      // highlight
-      ctx.globalAlpha *= 0.38;
-      line([-sw * 0.1, -sw * 0.17], Math.max(1, sw * 0.17), C.card);
-      ctx.globalAlpha /= 0.38;
       // patterns (setting)
       if (settings().patterns) this._pattern(ctx, col, pts.slice(0, -1).concat([head]), sw);
       // glyph on head (always)

@@ -1,0 +1,6 @@
+Arrow Escape v4.1 — Mobile banner + arrow alignment
+- Banner on level map from Level 1 (requires consent; no banner on active puzzle screen).
+- Single center-aligned arrow stroke; removed decorative offsets that looked crooked.
+- Rewarded videos now report loading and failure instead of silently doing nothing.
+- 28/28 source tests passed locally.
+- IMPORTANT: Android APK/ad loading not tested. npm dependencies were unavailable in this execution environment; run npm install && npm run build:web in Codespaces before building APK.

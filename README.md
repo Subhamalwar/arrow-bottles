@@ -52,3 +52,9 @@ git push origin main
 - The browser-facing game and independent HTML backup are `www/index.html` and `arrow-bottles-final-index.html`.
 - Native dependencies are installed by `npm install` inside Codespaces/GitHub Actions. `package-lock.json` is intentionally not included; existing repos can regenerate it with `npm install`. Run `npm install` before invoking `npm run build:web`.
 - Google Play Billing is not integrated. Do not claim the game has working real-money purchases yet.
+
+## v4.1 banner and arrow alignment patch (2026-11-02)
+- Banner eligibility starts at Level 1 on the level map once app consent is recorded; no Level 30 requirement. Native banner remains absent during active puzzles to protect phone space.
+- Removed offset dark under-stroke and off-axis glossy highlight from arrows. Paths use a single centered main stroke, keeping intentional Orbit Maze turns.
+- Rewarded ad attempts show loading/unavailable messages. Rewards are still granted only on SDK confirmation.
+- Run `npm install --no-audit --no-fund && npm test && npm run build:web` in Codespaces before committing. Native ad display requires an Android APK; browser tests do not validate AdMob loading.
