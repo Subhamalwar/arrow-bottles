@@ -1,0 +1,7 @@
+Arrow Escape v4.5
+- Victory celebrations: confetti on regular levels, rocket bursts every 5 levels, gold fireworks every 10 levels.
+- Effects are lightweight, nonblocking, and disabled for reduced motion.
+- Optional +2 gem rewarded ads in Shop no longer have a daily count cap.
+- Bottle-full coin rewards retain optional rewarded-ad doubling; no daily cap for that placement.
+- Ad availability still depends on consent, network and Google fill; rewards require confirmed completion.
+- Native Android APK and ad delivery must be tested on device.

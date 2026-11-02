@@ -733,6 +733,17 @@ html[data-reduce-motion="true"] .ab-logo-big .ab-logo-icon { animation: none !im
   animation: g-fall 1.1s ease-in forwards; }
 @keyframes g-fall { to { transform: translateY(240px) rotate(540deg); opacity: 0; } }
 
+
+/* v4.5: non-blocking, phone-friendly level-completion celebration */
+.g-victory-particle { position:fixed; z-index:1002; pointer-events:none; width:7px; height:11px;
+  border-radius:2px; left:var(--vx); top:var(--vy); background:var(--vc);
+  animation:g-victory-flight var(--vd) ease-out forwards; }
+.g-victory-particle.rocket { width:5px; height:16px; border-radius:50%; box-shadow:0 0 8px var(--vc); }
+@keyframes g-victory-flight { 0% { transform:translate(0,0) scale(.6); opacity:1 }
+  70% { opacity:1 } 100% { transform:translate(var(--dx),var(--dy)) rotate(var(--vr)) scale(.35); opacity:0 } }
+@media (prefers-reduced-motion:reduce) { .g-victory-particle { display:none } }
+html[data-reduce-motion="true"] .g-victory-particle { display:none }
+
 /* board stage */
 .g-stage { position: relative; flex: 1; min-height: 0; }
 .g-canvas { position: absolute; inset: 0; display: block; touch-action: none; transition: opacity .25s, filter .25s; }
@@ -3254,7 +3265,7 @@ window.AB = window.AB || {};
   'use strict';
   const el = (...a) => AB.util.el(...a);
 
-  const CAPS = { spin_extra: 1, free_hint: 3, heart: 3, mission_chest_double: 1, gems: 5 }; // others: no own cap
+  const CAPS = { spin_extra: 1, free_hint: 3, heart: 3, mission_chest_double: 1 }; // others: no own cap
   const TOTAL_CAP = 15;
   const INTER_DAY_CAP = 12;            // levels 30+
   const REWARDED_GAP_MS = 90 * 1000;
@@ -3386,7 +3397,7 @@ window.AB = window.AB || {};
     totalToday() { return state().total; },
     remaining(placement) {
       const s = state();
-      const left = TOTAL_CAP - s.total;
+      const left = (placement === 'gems' || placement === 'bottle_double') ? Number.MAX_SAFE_INTEGER : TOTAL_CAP - s.total;
       return CAPS[placement] != null ? Math.max(0, Math.min(left, CAPS[placement] - (s.counts[placement] || 0))) : Math.max(0, left);
     },
     canRewarded(placement) { return AB.ads.remaining(placement) > 0 && canServe(); },
@@ -4587,12 +4598,11 @@ window.AB = window.AB || {};
           gemGrid.append(card);
         });
         // rewarded +2 gems
-        const left = AB.ads.remaining('gems');
-        const adCard = el('button', { type: 'button', class: 'ab-gem-card ab-gem-ad', disabled: left <= 0 || !AB.ads.canRewarded('gems'),
-          'aria-label': left > 0 ? 'Watch an ad for 2 gems, ' + left + ' left today' : 'No more gem videos today' },
+        const adCard = el('button', { type: 'button', class: 'ab-gem-card ab-gem-ad', disabled: !AB.ads.canRewarded('gems'),
+          'aria-label': 'Watch an optional ad for 2 gems' },
           AB.ui.icon('watch_ad', 'ab-gem-ad-ic'),
           el('b', { class: 'ab-gem-amt' }, '+2'),
-          el('span', { class: 'ab-gem-name' }, left > 0 ? left + ' left today' : 'Come back tomorrow'),
+          el('span', { class: 'ab-gem-name' }, 'Watch an ad'),
           el('span', { class: 'ab-price-pill ab-price-ad' }, 'Free (ad)'));
         adCard.addEventListener('click', () => {
           AB.ads.rewarded('gems', {}).then(ok => {
@@ -6800,8 +6810,38 @@ window.AB = window.AB || {};
     requestAnimationFrame(step);
   }
 
+  // Victory celebration: confetti each level, rockets every 5, gold fireworks every 10.
+  // Purely decorative; never delays Next/Map or rewarded-ad buttons.
+  function victoryCelebration(g) {
+    if (fast() || reduceMotion() || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const level = Number(g.levelId) || 1;
+    const gold = level % 10 === 0, rockets = level % 5 === 0;
+    const palette = gold ? ['#ffd34e','#ffb700','#fff3b0','#ff8c28'] : ['#fc5c79','#3995ff','#28c48b','#a265eb','#ffc43d'];
+    const count = gold ? 65 : rockets ? 48 : 28;
+    const width = window.innerWidth || 390, height = window.innerHeight || 750;
+    const nodes = [];
+    for (let i=0; i<count; i++) {
+      const x = width * (rockets ? (i%2 ? .25 : .75) : (.18 + Math.random()*.64));
+      const y = height * (rockets ? .5 : .38);
+      const angle = Math.random()*Math.PI*2, radius = 70+Math.random()*(rockets?180:130);
+      const particle = document.createElement('span');
+      particle.className = 'g-victory-particle' + (rockets && i<10 ? ' rocket' : '');
+      particle.style.setProperty('--vx',x+'px');
+      particle.style.setProperty('--vy',y+'px');
+      particle.style.setProperty('--vc',palette[i%palette.length]);
+      particle.style.setProperty('--dx',Math.cos(angle)*radius+'px');
+      particle.style.setProperty('--dy',Math.sin(angle)*radius+'px');
+      particle.style.setProperty('--vr',Math.round(Math.random()*720-360)+'deg');
+      particle.style.setProperty('--vd',(rockets?1.6:1.15)+Math.random()*.65+'s');
+      document.body.append(particle);
+      nodes.push(particle);
+    }
+    setTimeout(() => nodes.forEach(n=>n.remove()), 2500);
+  }
+
   function winPanel(g, info, daily) {
     g.panelOpen = true; clearToasts();
+    victoryCelebration(g);
     const s = g.session, wasted = Math.max(0, s.used - s.minMoves);
     const coinNum = el('b', {}, '+0');
     const iqAnnouncement = (g.mode === 'campaign' || g.mode === 'replay') && Number.isFinite(g.level.puzzleIQ)
@@ -6931,9 +6971,9 @@ window.AB = window.AB || {};
         } });
       }
       const levelNum = g.mode === 'daily' ? 99 : g.levelId;
-      if (levelNum >= 5 && AB.ads && AB.ads.rewarded) {
+      if (AB.ads && AB.ads.rewarded) {
         const can = !AB.ads.canRewarded || AB.ads.canRewarded('continue');
-        buttons.push({ label: can ? '+20 seconds (watch ad)' : 'Ad not available', icon: 'watch_ad', kind: vipFree ? 'secondary' : 'primary', className: 'ab-btn-green', disabled: !can,
+        buttons.push({ label: can ? 'Watch Ad — Get +20 seconds' : 'Ad unavailable — try again later', icon: 'watch_ad', kind: vipFree ? 'secondary' : 'primary', className: 'ab-btn-green', disabled: !can,
           onClick: close => {
             if (adPending) return;
             adPending = true;
