@@ -1,6 +1,6 @@
 {
   "appId": "com.arrowbottles.game",
-  "appName": "Arrow Bottles",
+  "appName": "Arrow Escape",
   "webDir": "www",
   "server": {
     "androidScheme": "https"
